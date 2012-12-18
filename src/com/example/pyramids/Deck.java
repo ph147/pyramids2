@@ -29,8 +29,10 @@ public class Deck extends View
     
     private int height, width;
 
+
     private SharedPreferences saveState;
-    private int highScore;
+    private int highScore, highRun, totalGames;
+    private float average;
 
     private boolean gameOver;
 
@@ -268,6 +270,8 @@ public class Deck extends View
     private void deleteCard(int pos)
     {
         this.cards[pos] = -1;
+        //save("cards" + pos, -1);
+        save();
     }
 
     private boolean isNeighbor(int pos)
@@ -292,11 +296,15 @@ public class Deck extends View
         }
         ++this.stackPos;
         --this.stackRest;
+        //save("stackPos", stackPos);
+        //save("stackRest", stackRest);
 
         String s = ">>> stackPos: " + this.stackPos;
         Log.v(TAG, s);
 
         this.stackCard = cards[this.stackPos];
+        //save("stackCard", stackCard);
+        save();
 
         s = ">>> stackCard: " + getValue(this.stackCard);
         Log.v(TAG, s);
@@ -309,8 +317,13 @@ public class Deck extends View
         {
             this.score += this.pyramidBonus;
             this.pyramidBonus += 250;
+            //save("pyramidBonus", pyramidBonus);
+            save();
         }
         String s = ">>> currentWorth: " + this.currentWorth;
+        Log.v(TAG, s);
+
+        s = ">>> cardsToGo: " + this.cardsToGo;
         Log.v(TAG, s);
 
         this.score += this.currentWorth;
@@ -320,12 +333,27 @@ public class Deck extends View
             this.currentWorth *= 1.5;
         else
             this.currentWorth += 100;
+
+        //save("score", score);
+        //save("currentWorth", currentWorth);
+        save();
+    }
+
+    private void newHighRun(int run)
+    {
+        if (run > this.highRun)
+            this.highRun = run;
     }
 
     private void newRun()
     {
+        newHighRun(this.run);
         this.run = 0;
         this.currentWorth = 10;
+
+        //save("run", run);
+        //save("currentWorth", currentWorth);
+        save();
     }
 
     public int currentRound()
@@ -343,6 +371,7 @@ public class Deck extends View
         if (isNeighbor(i))
         {
             this.stackCard = cards[i];
+            //save("stackCard", stackCard);
 
             String s = ">>> stackCard (move): " + getValue(this.stackCard)
                                                   + ", i: " + i;
@@ -350,11 +379,14 @@ public class Deck extends View
 
             --this.cardsToGo;
             ++this.run;
+            //save("cardsToGo", cardsToGo);
+            //save("run", run);
             deleteCard(i);
             score(i);
             if (haveIWon())
                 iWon();
                 //return 1;
+            save();
             invalidate();
         }
         return 0;
@@ -412,13 +444,27 @@ public class Deck extends View
         Log.v(TAG, "i won.");
         ++this.round;
         this.score += this.clearBonus + this.stackRest * 100;
+        //save("round", round);
+        //save("score", score);
+        save();
         init();
+    }
+
+    private void calculateAverage(int score)
+    {
+       this.average = (float)
+           (average*((double)totalGames/(totalGames+1)) +
+            ((double)score/(totalGames+1)));
     }
 
     private void youLost()
     {
         newHighscore(this.score);
+        calculateAverage(this.score);
+        ++this.totalGames;
         this.gameOver = true;
+        //save("gameOver", gameOver);
+        save();
         invalidate();
         Log.v(TAG, "you lost.");
     }
@@ -444,8 +490,12 @@ public class Deck extends View
                 Log.v(TAG, "playagain");
                 this.round = 1;
                 this.score = 0;
+                //save("round", round);
+                //save("score", score);
                 init();
                 this.gameOver = false;
+                //save("gameOver", gameOver);
+                save();
                 invalidate();
                 // TODO save highscores
             }
@@ -469,6 +519,10 @@ public class Deck extends View
         {
             newRun();
             nextStack();
+            String s = "########## High Run: " + highRun + ", " +
+                "Average: " + average + ", " +
+                "Total Games: " + totalGames;
+            Log.v(TAG, s);
             invalidate();
             return true;
         }
@@ -614,6 +668,13 @@ public class Deck extends View
         }
     }
 
+    private void generateCards()
+    {
+        for (int i = 0; i < numberOfCards; ++i)
+            cards[i] = i;
+        shuffle();
+    }
+
     private void init()
     {
         //this.pyramidBonus = 500;
@@ -622,6 +683,11 @@ public class Deck extends View
         this.stackCard = cards[this.stackPos];
         this.cardsToGo = 28;
 
+        //save("stackPos", stackPos);
+        //save("stackRest", stackRest);
+        //save("stackCard", stackCard);
+        //save("cardsToGo", cardsToGo);
+
         /* Yahoo doesn't reset the runs, but resets
          * currentWorth to 10 when round is won.
          * Probably a bug. */
@@ -629,11 +695,55 @@ public class Deck extends View
         this.currentWorth = 10;
 
         this.pyramidBonus = 250+this.round*250;
+
+        //save("currentWorth", currentWorth);
+        //save("pyramidBonus", pyramidBonus);
+
+        generateCards();
+        //for (int i = 0; i < numberOfCards; ++i)
+            //save("cards" + i, cards[i]);
+        save();
+    }
+
+    private void save()
+    {
+        SharedPreferences.Editor editor = this.saveState.edit();
+        editor.putInt("highRun", highRun);
+        editor.putFloat("average", average);
+        editor.putInt("totalGames", totalGames);
+
+        editor.putInt("score", score);
+        editor.putBoolean("gameOver", gameOver);
+        editor.putInt("round", round);
+        editor.putInt("pyramidBonus", pyramidBonus);
+        editor.putInt("currentWorth", currentWorth);
+        editor.putInt("run", run);
+
+        editor.putInt("stackPos", stackPos);
+        editor.putInt("stackRest", stackRest);
+        editor.putInt("stackCard", stackCard);
+        editor.putInt("cardsToGo", cardsToGo);
+
+        editor.putInt("currentWorth", currentWorth);
+
         for (int i = 0; i < numberOfCards; ++i)
-        {
-            cards[i] = i;
-        }
-        shuffle();
+            editor.putInt("cards" + i, cards[i]);
+
+        editor.commit();
+    }
+
+    private void save(String s, boolean value)
+    {
+        SharedPreferences.Editor editor = this.saveState.edit();
+        editor.putBoolean(s, value);
+        editor.commit();
+    }
+
+    private void save(String s, int value)
+    {
+        SharedPreferences.Editor editor = this.saveState.edit();
+        editor.putInt(s, value);
+        editor.commit();
     }
 
     private void newHighscore(int score)
@@ -646,28 +756,74 @@ public class Deck extends View
         editor.commit();
     }
 
+    private boolean restoreLastState()
+    {
+        this.highScore = saveState.getInt("highscore", 0);
+        this.highRun = saveState.getInt("highRun", 0);
+        this.average = saveState.getFloat("average", 0F);
+        this.totalGames = saveState.getInt("totalGames", 0);
+
+        this.score = saveState.getInt("score", 0);
+        this.gameOver = saveState.getBoolean("gameOver", false);
+        this.round = saveState.getInt("round", 1);
+        //this.pyramidBonus = saveState.getInt("pyramidBonus", 750);
+        this.currentWorth = saveState.getInt("currentWorth", 10);
+        this.run = saveState.getInt("run", 0);
+
+        this.stackPos = saveState.getInt("stackPos", 28);
+        this.stackRest = saveState.getInt("stackRest",
+                this.numberOfCards - this.stackPos);
+        this.stackCard = saveState.getInt("stackCard",
+                cards[this.stackPos]);
+        this.cardsToGo = saveState.getInt("cardsToGo", 28);
+
+        /* Yahoo doesn't reset the runs, but resets
+         * currentWorth to 10 when round is won.
+         * Probably a bug. */
+        //this.run = 0;
+        this.currentWorth = saveState.getInt("currentWorth", 10);
+
+        this.pyramidBonus = saveState.getInt("pyramidBonus",
+                250+this.round*250);
+
+        // TODO maybe check all 52 cards?
+        if (saveState.getInt("cards51", -9) != -9)
+        {
+            for (int i = 0; i < numberOfCards; ++i)
+                cards[i] = saveState.getInt("cards" + i, i);
+        }
+        else
+            generateCards();
+
+        return true;
+    }
+
     public Deck(Context context)
     {
         super(context);
-        cards = new int[numberOfCards];
-        cardImages = new Bitmap[numberOfCards];
-        this.score = 0;
-        this.gameOver = false;
-        this.round = 1;
-        this.pyramidBonus = 750;
-        this.currentWorth = 10;
-        this.run = 0;
-        init();
-        setBitmaps(context);
     }
 
     public Deck(Context context, int width, int height, SharedPreferences save)
     {
         this(context);
-        this.horizontalPadding = (width-this.boardWidth)/2+13;
-        this.verticalPadding = (height-this.boardHeight-30)/2+32;
 
         this.saveState = save;
-        this.highScore = save.getInt("highscore", 0);
+
+        cards = new int[numberOfCards];
+        cardImages = new Bitmap[numberOfCards];
+        if (!restoreLastState())
+        {
+            this.score = 0;
+            this.gameOver = false;
+            this.round = 1;
+            this.pyramidBonus = 750;
+            this.currentWorth = 10;
+            this.run = 0;
+            init();
+        }
+        setBitmaps(context);
+
+        this.horizontalPadding = (width-this.boardWidth)/2+13;
+        this.verticalPadding = (height-this.boardHeight-30)/2+32;
     }
 }
