@@ -270,8 +270,6 @@ public class Deck extends View
     private void deleteCard(int pos)
     {
         this.cards[pos] = -1;
-        //save("cards" + pos, -1);
-        save();
     }
 
     private boolean isNeighbor(int pos)
@@ -296,15 +294,11 @@ public class Deck extends View
         }
         ++this.stackPos;
         --this.stackRest;
-        //save("stackPos", stackPos);
-        //save("stackRest", stackRest);
 
         String s = ">>> stackPos: " + this.stackPos;
         Log.v(TAG, s);
 
         this.stackCard = cards[this.stackPos];
-        //save("stackCard", stackCard);
-        save();
 
         s = ">>> stackCard: " + getValue(this.stackCard);
         Log.v(TAG, s);
@@ -317,8 +311,6 @@ public class Deck extends View
         {
             this.score += this.pyramidBonus;
             this.pyramidBonus += 250;
-            //save("pyramidBonus", pyramidBonus);
-            save();
         }
         String s = ">>> currentWorth: " + this.currentWorth;
         Log.v(TAG, s);
@@ -333,10 +325,6 @@ public class Deck extends View
             this.currentWorth *= 1.5;
         else
             this.currentWorth += 100;
-
-        //save("score", score);
-        //save("currentWorth", currentWorth);
-        save();
     }
 
     private void newHighRun(int run)
@@ -350,10 +338,6 @@ public class Deck extends View
         newHighRun(this.run);
         this.run = 0;
         this.currentWorth = 10;
-
-        //save("run", run);
-        //save("currentWorth", currentWorth);
-        save();
     }
 
     public int currentRound()
@@ -371,7 +355,6 @@ public class Deck extends View
         if (isNeighbor(i))
         {
             this.stackCard = cards[i];
-            //save("stackCard", stackCard);
 
             String s = ">>> stackCard (move): " + getValue(this.stackCard)
                                                   + ", i: " + i;
@@ -379,8 +362,6 @@ public class Deck extends View
 
             --this.cardsToGo;
             ++this.run;
-            //save("cardsToGo", cardsToGo);
-            //save("run", run);
             deleteCard(i);
             score(i);
             if (haveIWon())
@@ -444,9 +425,6 @@ public class Deck extends View
         Log.v(TAG, "i won.");
         ++this.round;
         this.score += this.clearBonus + this.stackRest * 100;
-        //save("round", round);
-        //save("score", score);
-        save();
         init();
     }
 
@@ -463,7 +441,6 @@ public class Deck extends View
         calculateAverage(this.score);
         ++this.totalGames;
         this.gameOver = true;
-        //save("gameOver", gameOver);
         save();
         invalidate();
         Log.v(TAG, "you lost.");
@@ -490,11 +467,8 @@ public class Deck extends View
                 Log.v(TAG, "playagain");
                 this.round = 1;
                 this.score = 0;
-                //save("round", round);
-                //save("score", score);
                 init();
                 this.gameOver = false;
-                //save("gameOver", gameOver);
                 save();
                 invalidate();
                 // TODO save highscores
@@ -519,6 +493,7 @@ public class Deck extends View
         {
             newRun();
             nextStack();
+            save();
             String s = "########## High Run: " + highRun + ", " +
                 "Average: " + average + ", " +
                 "Total Games: " + totalGames;
@@ -686,11 +661,6 @@ public class Deck extends View
         this.stackCard = cards[this.stackPos];
         this.cardsToGo = 28;
 
-        //save("stackPos", stackPos);
-        //save("stackRest", stackRest);
-        //save("stackCard", stackCard);
-        //save("cardsToGo", cardsToGo);
-
         /* Yahoo doesn't reset the runs, but resets
          * currentWorth to 10 when round is won.
          * Probably a bug. */
@@ -699,12 +669,7 @@ public class Deck extends View
 
         this.pyramidBonus = 250+this.round*250;
 
-        //save("currentWorth", currentWorth);
-        //save("pyramidBonus", pyramidBonus);
-
         generateCards();
-        //for (int i = 0; i < numberOfCards; ++i)
-            //save("cards" + i, cards[i]);
         save();
     }
 
