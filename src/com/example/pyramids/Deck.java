@@ -564,12 +564,24 @@ public class Deck extends View
         Log.v(TAG, s);
     }
 
+    private void drawText(Canvas canvas, Paint paint, String text,
+            int left, int top, Paint.Align align, int size)
+    {
+        paint.setTextSize(size);
+        paint.setTextAlign(align);
+        canvas.drawText(text,
+                horizontalPadding + left,
+                verticalPadding + top,
+                paint);
+    }
+
     @Override
     public void onDraw(Canvas canvas)
     {
         int pos = 0;
 
         Bitmap currentCard;
+        String text;
 
         /*
         canvas.drawBitmap(this.board,
@@ -583,30 +595,20 @@ public class Deck extends View
         paint.setFakeBoldText(true);
         paint.setAntiAlias(true);
 
-        String text = "Run: " + this.run;
-        canvas.drawText(text,
-                horizontalPadding + 10,
-                verticalPadding - 10,
-                paint);
-        text = "Score: " + numWithCommas(this.score);
-        canvas.drawText(text,
-                horizontalPadding + 230,
-                verticalPadding - 10,
-                paint);
-
-        paint.setTextAlign(Paint.Align.RIGHT);
-        text = "Round: " + this.round;
-        canvas.drawText(text,
-                horizontalPadding + 530,
-                verticalPadding - 10,
-                paint);
-
-        paint.setTextAlign(Paint.Align.LEFT);
-        text = "High Score: " + numWithCommas(this.highScore);
-        canvas.drawText(text,
-                horizontalPadding + 10,
-                verticalPadding + 283,
-                paint);
+        drawText(canvas, paint, "Run: " + this.run,
+                10, -10, Paint.Align.LEFT, 18);
+        drawText(canvas, paint, "Score: " + numWithCommas(this.score),
+                230, -10, Paint.Align.LEFT, 18);
+        drawText(canvas, paint, "Round: " + this.round,
+                530, -10, Paint.Align.RIGHT, 18);
+        drawText(canvas, paint, "High Score: " + numWithCommas(highScore),
+                10, 283, Paint.Align.LEFT, 14);
+        drawText(canvas, paint, "Average: " + this.average,
+                160, 283, Paint.Align.LEFT, 14);
+        drawText(canvas, paint, "Total Games: " + this.totalGames,
+                300, 283, Paint.Align.LEFT, 14);
+        drawText(canvas, paint, "High Run: " + this.highRun,
+                445, 283, Paint.Align.LEFT, 14);
 
         for (int i = 0; i < this.rows; ++i)
         {
@@ -659,6 +661,7 @@ public class Deck extends View
                     this.verticalPadding + (boardHeight-gameOverHeight)/2 + 95,
                     null);
             paint.setColor(0xff0000aa);
+            paint.setTextSize(18);
             paint.setTextAlign(Paint.Align.RIGHT);
             text = numWithCommas(this.score);
             canvas.drawText(text,
